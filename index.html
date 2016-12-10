@@ -1,164 +1,284 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-        <meta http-equiv="x-ua-compatible" content="ie=edge">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
 
-        <script src="https://opensource.keycdn.com/angularjs/1.5.8/angular.min.js"></script>
-        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.5/css/bootstrap.min.css" integrity="sha384-AysaV+vQoT3kOAXZkl02PThvDr8HYKPZhNT5h/CXfBThSRXQ6jW5DO2ekP5ViFdi" crossorigin="anonymous">
+    <script src="https://opensource.keycdn.com/angularjs/1.5.8/angular.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.5/css/bootstrap.min.css"
+          integrity="sha384-AysaV+vQoT3kOAXZkl02PThvDr8HYKPZhNT5h/CXfBThSRXQ6jW5DO2ekP5ViFdi" crossorigin="anonymous">
 
-        <style>
-            html {
-                position: relative;
-                min-height: 100%;
-            }
-            body {
-                margin-bottom: 60px;
-            }
-            .footer {
-                position: absolute;
-                bottom: 0;
-                width: 100%;
-                height: 60px;
-                line-height: 60px; /* Vertically center the text there */
-                background-color: #f5f5f5;
-            }
+    <style>
+        html {
+            position: relative;
+            min-height: 100%;
+        }
 
-            body > .container {
-                padding: 60px 15px 0;
-            }
+        body {
+            margin-bottom: 60px;
+        }
 
-            .footer > .container {
-                padding-right: 15px;
-                padding-left: 15px;
-            }
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 60px;
+            line-height: 60px; /* Vertically center the text there */
+            background-color: #f5f5f5;
+        }
 
-            code {
-                font-size: 80%;
-            }
+        body > .container {
+            padding: 60px 15px 0;
+        }
 
-        </style>
+        .footer > .container {
+            padding-right: 15px;
+            padding-left: 15px;
+        }
+    </style>
 
-        <script>
-            var app = angular.module('markCalculator', []);
-            app.controller('calcCtrl',  function($scope) {
-                $scope.profileSet = false;
+    <script>
+        var app = angular.module('markCalculator', []);
+        app.controller('calcCtrl', function ($scope) {
+            $scope.profileSet = true;
 
-                $scope.course = null;
-                $scope.name   = null;
-                $scope.year   = 1;
+            $scope.course = null;
+            $scope.name = null;
+            $scope.year = 1;
 
-                $scope.courses = { MEng: 1, BEng: 2 };
+            $scope.courses = {MEng: 1, BEng: 2};
 
-                $scope.courseString = function(course) {
-                    if (course == $scope.courses.MEng) return "MEng";
-                    if (course == $scope.courses.BEng) return "BEng";
+            $scope.courseString = function(course) {
+                if (course == $scope.courses.MEng) return "MEng";
+                if (course == $scope.courses.BEng) return "BEng";
+            };
+
+            $scope.getMarkForModule = function(year, module) {
+                return Math.max(Math.min($scope.scores[year][module], 100), 0) || 0;
+            };
+
+            $scope.getGradeForModule = function(year, module) {
+                return $scope.convertMarkToGrade($scope.getMarkForModule(year, module));
+            };
+
+            $scope.convertGradeToMark = function(grade) {
+                return 90 - ($scope.grades.indexOf(grade) * 10);
+            };
+
+            $scope.convertMarkToGrade = function(mark) {
+                var grades = $scope.grades.slice();
+                while (mark < 90 && grades.length > 1) {
+                    grades.shift();
+                    mark += 10;
                 }
-            });
-        </script>
-    </head>
-    <body ng-app="markCalculator" ng-controller="calcCtrl">
-        <div class="pos-f-t">
-            <nav class="navbar navbar-light navbar-static-top bg-faded">
-                <div class="container">
-                    <button class="navbar-toggler hidden-sm-up" type="button" data-toggle="collapse" data-target="#exCollapsingNavbar2" aria-expanded="false" aria-controls="exCollapsingNavbar2" aria-label="Toggle navigation"></button>
-                    <div class="collapse navbar-toggleable-xs" id="exCollapsingNavbar2">
-                        <a class="navbar-brand" href="#">IC DoC Mark Calculator</a>
-                        <ul class="nav navbar-nav" ng-show="profileSet">
-                            <li class="nav-item" ng-class="{active: year === 1}">
-                                <a class="nav-link" href="#" ng-click="year = 1">1st Year</a>
-                            </li>
-                            <li class="nav-item" ng-class="{active: year === 2}">
-                                <a class="nav-link" href="#" ng-click="year = 2">2nd Year</a>
-                            </li>
-                            <li class="nav-item" ng-class="{active: year === 3}">
-                                <a class="nav-link" href="#" ng-click="year = 3">3rd Year</a>
-                            </li>
-                            <li class="nav-item" ng-show="course == courses.MEng" ng-class="{active: year === 4}">
-                                <a class="nav-link" href="#" ng-click="year = 4">4th Year</a>
-                            </li>
-                        </ul>
-                        <ul class="nav navbar-nav float-xs-right" ng-show="profileSet">
-                            <li class="nav-item">
-                                <a class="nav-link">{{name}}</a>
-                            </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">{{courseString(course)}}</a>
-                                <div class="dropdown-menu">
-                                    <a class="dropdown-item" href="#" ng-click="course = courses.BEng; year = 1">BEng</a>
-                                    <a class="dropdown-item" href="#" ng-click="course = courses.MEng; year = 1">MEng</a>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-        </div>
+                return grades.shift();
+            };
 
-        <!-- Begin page content -->
+            $scope.getCreditsForModule = function(year, component) {
+                return $scope.getMarkForModule(year, component.title) / 100 * component.credits;
+            };
+
+            $scope.getCreditsForYear = function(year) {
+                var sum = 0;
+                for (var componentKey in $scope.courseWeightings[year]) {
+                    sum += $scope.getCreditsForModule(year, $scope.courseWeightings[year][componentKey]);
+                }
+                return sum;
+            };
+
+            $scope.getTotalCreditsForYear = function(year) {
+                return $scope.courseWeightings[year]
+                        .map(function(m) { return m.credits; })
+                        .reduce(function(a, v) { return a + v }, 0);
+            };
+
+            $scope.getGradeForYear = function(year) {
+                return $scope.convertMarkToGrade(
+                    100 * $scope.getCreditsForYear(year) / $scope.getTotalCreditsForYear(year)
+                );
+            };
+
+            $scope.scores = {
+                1: {},
+                2: {},
+                3: {},
+                4: {}
+            };
+
+            $scope.grades = ['A*', 'A+', 'A', 'B', 'C', 'D', 'F'];
+            $scope.gradeFunctions = {};
+
+            $scope.courseWeightings = {
+                1: [
+                    {title: 'Hardware Exam', credits: 65},
+                    {title: 'Architecture Exam', credits: 65},
+                    {title: 'Logic Exam', credits: 65},
+                    {title: 'Reasoning about Programs Exam', credits: 65},
+                    {title: 'Maths Methods Exam', credits: 65},
+                    {title: 'Discrete Maths Exam', credits: 65},
+                    {title: 'Databases Exam', credits: 65},
+                    {title: 'Haskell Driving Test', credits: 16.8},
+                    {title: 'Haskell Final Test', credits: 67.2},
+                    {title: 'Java Practice Test', credits: 5.4},
+                    {title: 'Java Driving Test', credits: 16.2},
+                    {title: 'Java Final Test', credits: 86.4},
+                    {title: 'ARM Project', credits: 19.2},
+                    {title: 'C Exam', credits: 28.8},
+                    {title: 'Databases', credits: 15},
+                    {title: 'Hardware', credits: 15},
+                    {title: 'Logic', credits: 15},
+                    {title: 'Discrete Maths', credits: 15},
+                    {title: 'Maths Methods', credits: 15},
+                    {title: 'Architecture', credits: 15},
+                    {title: 'Ethics', credits: 5},
+                    {title: 'Presention Skills', credits: 5},
+                    {title: 'Topics', credits: 55}
+                ]
+            };
+
+            for (var year in $scope.courseWeightings) {
+                $scope.gradeFunctions[year] = {};
+                $scope.courseWeightings[year].forEach(function(module) {
+                    console.log(module.title);
+                    $scope.gradeFunctions[year][module.title] = function(grade) {
+                        if (grade === undefined) return $scope.getGradeForModule(year, module.title);
+                        $scope.scores[year][module.title] = $scope.convertGradeToMark(grade);
+                        return grade;
+                    };
+                });
+            }
+        });
+    </script>
+</head>
+<body ng-app="markCalculator" ng-controller="calcCtrl">
+<div class="pos-f-t">
+    <nav class="navbar navbar-light navbar-static-top bg-faded">
         <div class="container">
-            <div ng-show="profileSet" ng-switch on="year">
-                <div ng-switch-when="1">
-                    Year 1
-                </div>
-                <div ng-switch-when="2">
-                    Year 2
-                </div>
-                <div ng-switch-when="3">
-                    Year 3
-                </div>
-                <div ng-switch-when="4">
-                    Year 4
-                </div>
-            </div>
-            <div ng-show="!profileSet">
-                <h1>Welcome!</h1>
-                <p class="lead">
-                    Get started below! Your data is stored locally, and not uploaded to, or processed by, any server.
-                </p>
-                <div class="form-group row">
-                    <label for="name-input" class="col-xs-2 col-form-label">Your Name</label>
-                    <div class="col-xs-10">
-                        <input class="form-control" type="text" placeholder="Name" ng-model="name" id="name-input">
-                    </div>
-                </div>
-                <fieldset class="form-group row">
-                    <legend class="col-form-legend col-sm-2">Degree Program</legend>
-                    <div class="col-sm-10">
-                        <div class="form-check">
-                            <label class="form-check-label">
-                                <input class="form-check-input" type="radio" ng-model="course" ng-value="courses.BEng">
-                                BEng
-                            </label>
+            <button class="navbar-toggler hidden-sm-up" type="button" data-toggle="collapse"
+                    data-target="#exCollapsingNavbar2" aria-expanded="false" aria-controls="exCollapsingNavbar2"
+                    aria-label="Toggle navigation"></button>
+            <div class="collapse navbar-toggleable-xs" id="exCollapsingNavbar2">
+                <a class="navbar-brand" href="#">IC DoC Mark Calculator</a>
+                <ul class="nav navbar-nav" ng-show="profileSet">
+                    <li class="nav-item" ng-class="{active: year === 1}">
+                        <a class="nav-link" href="#" ng-click="year = 1">1st Year</a>
+                    </li>
+                    <li class="nav-item" ng-class="{active: year === 2}">
+                        <a class="nav-link" href="#" ng-click="year = 2">2nd Year</a>
+                    </li>
+                    <li class="nav-item" ng-class="{active: year === 3}">
+                        <a class="nav-link" href="#" ng-click="year = 3">3rd Year</a>
+                    </li>
+                    <li class="nav-item" ng-show="course == courses.MEng" ng-class="{active: year === 4}">
+                        <a class="nav-link" href="#" ng-click="year = 4">4th Year</a>
+                    </li>
+                </ul>
+                <ul class="nav navbar-nav float-xs-right" ng-show="profileSet">
+                    <li class="nav-item">
+                        <a class="nav-link">{{name}}</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button"
+                           aria-haspopup="true" aria-expanded="false">{{courseString(course)}}</a>
+                        <div class="dropdown-menu">
+                            <a class="dropdown-item" href="#" ng-click="course = courses.BEng; year = 1">BEng</a>
+                            <a class="dropdown-item" href="#" ng-click="course = courses.MEng; year = 1">MEng</a>
                         </div>
-                        <div class="form-check">
-                            <label class="form-check-label">
-                                <input class="form-check-input" type="radio" ng-model="course" ng-value="courses.MEng">
-                                MEng
-                            </label>
-                        </div>
-                    </div>
-                </fieldset>
-                <div class="form-group row">
-                    <div class="offset-sm-2 col-sm-10">
-                        <button type="submit" class="btn btn-primary" ng-click="profileSet = true"
-                                ng-disabled="course == null || name == null || name == ''">
-                            Begin
-                        </button>
-                    </div>
-                </div>
+                    </li>
+                </ul>
             </div>
         </div>
+    </nav>
+</div>
 
-        <footer class="footer">
-            <div class="container">
-                <span class="text-muted">Ashley Davies 2016 | This page uses the "Sticky Footer" bootstrap template | I will never upload or save your data without explicitly informing you</span>
+<!-- Begin page content -->
+<div class="container">
+    <br/>
+    <br/>
+    <div ng-show="profileSet">
+        Your total credits: {{ getCreditsForYear(year) }} / {{ getTotalCreditsForYear(year) }} {{ getGradeForYear(year) }}
+        <ul class="list-group">
+            <li class="list-group-item" ng-repeat="component in courseWeightings[year]">
+                <div class="row">
+                    <div class="col-xs-4">
+                        {{ component.title }}
+                    </div>
+                    <div class="col-xs-3" style="text-align: center">
+                        <label for="">{{ component.credits }}</label>
+                    </div>
+                    <div class="col-xs-3" style="text-align: center">
+                        <label for="">{{ getCreditsForModule(year, component) }}</label>
+                    </div>
+                    <div class="col-xs-1">
+                        <input class="form-control" ng-model="scores[year][component.title]" type="text"/>
+                    </div>
+                    <div class="col-xs-1">
+                        <select class="custom-select"
+                            ng-model="gradeFunctions[year][component.title]"
+                            ng-model-options="{ getterSetter: true }"
+                            ng-options="grade for grade in grades">
+                        </select>
+                    </div>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <div ng-show="!profileSet">
+        <h1>Welcome!</h1>
+        <p class="lead">
+            Get started below! Your data is stored locally, and not uploaded to, or processed by, any server.
+        </p>
+        <div class="form-group row">
+            <label for="name-input" class="col-xs-2 col-form-label">Your Name</label>
+            <div class="col-xs-10">
+                <input class="form-control" type="text" placeholder="Name" ng-model="name" id="name-input">
             </div>
-        </footer>
+        </div>
+        <fieldset class="form-group row">
+            <legend class="col-form-legend col-sm-2">Degree Program</legend>
+            <div class="col-sm-10">
+                <div class="form-check">
+                    <label class="form-check-label">
+                        <input class="form-check-input" type="radio" ng-model="course" ng-value="courses.BEng">
+                        BEng
+                    </label>
+                </div>
+                <div class="form-check">
+                    <label class="form-check-label">
+                        <input class="form-check-input" type="radio" ng-model="course" ng-value="courses.MEng">
+                        MEng
+                    </label>
+                </div>
+            </div>
+        </fieldset>
+        <div class="form-group row">
+            <div class="offset-sm-2 col-sm-10">
+                <button type="submit" class="btn btn-primary" ng-click="profileSet = true"
+                        ng-disabled="course == null || name == null || name == ''">
+                    Begin
+                </button>
+            </div>
+        </div>
+    </div>
+    <br/>
+    <br/>
+</div>
 
-        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js" integrity="sha384-3ceskX3iaEnIogmQchP8opvBy3Mi7Ce34nWjpBIwVTHfGYWQS9jwHDVRnpKKHJg7" crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.3.7/js/tether.min.js" integrity="sha384-XTs3FgkjiBgo8qjEjBk0tGmf3wPrWtA6coPfQDfFEY8AnYJwjalXCiosYRBIBZX8" crossorigin="anonymous"></script>
-        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.5/js/bootstrap.min.js" integrity="sha384-BLiI7JTZm+JWlgKa0M0kGRpJbF2J8q+qreVrKBC47e3K6BW78kGLrCkeRX6I9RoK" crossorigin="anonymous"></script>
-    </body>
+<footer class="footer">
+    <div class="container">
+        <span class="text-muted">Ashley Davies 2016 | This page uses the "Sticky Footer" bootstrap template | I will never upload or save your data without explicitly informing you</span>
+    </div>
+</footer>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"
+        integrity="sha384-3ceskX3iaEnIogmQchP8opvBy3Mi7Ce34nWjpBIwVTHfGYWQS9jwHDVRnpKKHJg7"
+        crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.3.7/js/tether.min.js"
+        integrity="sha384-XTs3FgkjiBgo8qjEjBk0tGmf3wPrWtA6coPfQDfFEY8AnYJwjalXCiosYRBIBZX8"
+        crossorigin="anonymous"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.5/js/bootstrap.min.js"
+        integrity="sha384-BLiI7JTZm+JWlgKa0M0kGRpJbF2J8q+qreVrKBC47e3K6BW78kGLrCkeRX6I9RoK"
+        crossorigin="anonymous"></script>
+</body>
 </html>
