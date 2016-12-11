@@ -36,6 +36,11 @@
             padding-right: 15px;
             padding-left: 15px;
         }
+
+        /* Hacky - LMK if you're reading this and manage to find a better way :) */
+        .text-only-ul-block {
+            margin-top: 6px;
+        }
     </style>
 
     <script>
@@ -89,24 +94,28 @@
 
             $scope.getTotalCreditsForYear = function(year) {
                 return $scope.courseWeightings[year]
+                        .filter(function(m) { return !m.excludeTotal; })
                         .map(function(m) { return m.credits; })
                         .reduce(function(a, v) { return a + v }, 0);
             };
 
-            $scope.getGradeForYear = function(year) {
-                return $scope.convertMarkToGrade(
-                    100 * $scope.getCreditsForYear(year) / $scope.getTotalCreditsForYear(year)
-                );
+            $scope.getMarkForYear = function(year) {
+                return 100 * $scope.getCreditsForYear(year) / $scope.getTotalCreditsForYear(year);
             };
 
-            $scope.scores = {
-                1: {},
-                2: {},
-                3: {},
-                4: {}
+            $scope.getGradeForYear = function(year) {
+                return $scope.convertMarkToGrade($scope.getMarkForYear(year));
             };
+
+            $scope.scores = {1: {}, 2: {}, 3: {}, 4: {}};
 
             $scope.grades = ['A*', 'A+', 'A', 'B', 'C', 'D', 'F'];
+            $scope.gradeListClasses = {'A*': 'list-group-item-success', 'A+': 'list-group-item-success',
+                A: 'list-group-item-success', B: 'list-group-item-warning', C: 'list-group-item-warning',
+                D: 'list-group-item-info', F: 'list-group-item-danger'};
+            $scope.gradeTagClasses = {'A*': 'list-group-item-success', 'A+': 'list-group-item-success',
+                A: 'list-group-item-success', B: 'list-group-item-warning', C: 'list-group-item-warning',
+                D: 'list-group-item-info', F: 'tag-danger'};
             $scope.gradeFunctions = {};
 
             $scope.courseWeightings = {
@@ -125,27 +134,59 @@
                     {title: 'Java Final Test', credits: 86.4},
                     {title: 'ARM Project', credits: 19.2},
                     {title: 'C Exam', credits: 28.8},
-                    {title: 'Databases', credits: 15},
-                    {title: 'Hardware', credits: 15},
-                    {title: 'Logic', credits: 15},
-                    {title: 'Discrete Maths', credits: 15},
-                    {title: 'Maths Methods', credits: 15},
-                    {title: 'Architecture', credits: 15},
+                    {title: 'Databases Coursework', credits: 15},
+                    {title: 'Hardware Coursework', credits: 15},
+                    {title: 'Logic Coursework', credits: 15},
+                    {title: 'Discrete Maths Coursework', credits: 15},
+                    {title: 'Maths Methods Coursework', credits: 15},
+                    {title: 'Architecture Coursework', credits: 15},
                     {title: 'Ethics', credits: 5},
                     {title: 'Presention Skills', credits: 5},
                     {title: 'Topics', credits: 55}
-                ]
+                ],
+                2: [
+                    {title: 'Software Design Exam', credits: 130},
+                    {title: 'Statistics Exam', credits: 130},
+                    {title: 'Compilers Exam', credits: 130},
+                    {title: 'Models of Computation Exam', credits: 130},
+                    {title: 'Concurrency Exam', credits: 130},
+                    {title: 'Software Algorithms Exam', credits: 130},
+                    {title: 'Operating Systems Exam', credits: 130},
+                    {title: 'Networks Exam', credits: 130},
+                    {title: 'Architecture Exam', credits: 130},
+                    {title: 'Computational Techniques', credits: 130},
+                    {title: 'Intro to AI', credits: 130, excludeTotal: true},
+
+                    {title: 'Linkload', credits: 11.3},
+                    {title: 'Enigma', credits: 33.7},
+                    {title: 'WACC Frontend', credits: 36},
+                    {title: 'WACC Backend', credits: 36},
+                    {title: 'WACC Extension', credits: 18},
+
+                    {title: 'Team Skills Attendance', credits: 0.6},
+                    {title: 'Team Skills Video', credits: 1.9},
+
+                    {title: 'Pintos', credits: 90},
+
+                    {title: 'Prolog Coursework', credits: 22.5},
+
+                    {title: 'Webapps', credits: 150}
+                ],
+                3: []
+            };
+
+            $scope.createGradeFunction = function(year, module) {
+                return function(grade) {
+                    if (grade === undefined) return $scope.getGradeForModule(year, module.title);
+                    $scope.scores[year][module.title] = $scope.convertGradeToMark(grade);
+                    return grade;
+                };
             };
 
             for (var year in $scope.courseWeightings) {
                 $scope.gradeFunctions[year] = {};
                 $scope.courseWeightings[year].forEach(function(module) {
-                    console.log(module.title);
-                    $scope.gradeFunctions[year][module.title] = function(grade) {
-                        if (grade === undefined) return $scope.getGradeForModule(year, module.title);
-                        $scope.scores[year][module.title] = $scope.convertGradeToMark(grade);
-                        return grade;
-                    };
+                    $scope.gradeFunctions[year][module.title] = $scope.createGradeFunction(year, module)
                 });
             }
         });
@@ -197,32 +238,43 @@
     <br/>
     <br/>
     <div ng-show="profileSet">
-        Your total credits: {{ getCreditsForYear(year) }} / {{ getTotalCreditsForYear(year) }} {{ getGradeForYear(year) }}
-        <ul class="list-group">
-            <li class="list-group-item" ng-repeat="component in courseWeightings[year]">
-                <div class="row">
-                    <div class="col-xs-4">
-                        {{ component.title }}
+        <div class="card card-block">
+            <h4 class="card-title">Overall Summary</h4>
+        </div>
+        <div class="card">
+            <div class="card-block">
+                <h4 class="card-title">Year {{year}} Summary</h4>
+                Credits: {{ getCreditsForYear(year) }} / {{ getTotalCreditsForYear(year) }}
+                <span class="tag" ng-class="gradeTagClasses[getGradeForYear(year)]">
+                    {{ getGradeForYear(year) }}&nbsp;&nbsp;&nbsp;{{ getMarkForYear(year) | number:1 }}%
+                </span>
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item" ng-class="gradeListClasses[gradeFunctions[year][component.title]()]" ng-repeat="component in courseWeightings[year]">
+                    <div class="row">
+                        <div class="col-xs-4 text-only-ul-block">
+                            {{ component.title }}
+                        </div>
+                        <div class="col-xs-2 text-only-ul-block" style="text-align: center">
+                            {{ component.credits }}
+                        </div>
+                        <div class="col-xs-2 text-only-ul-block" style="text-align: center">
+                            {{ getCreditsForModule(year, component) | number:1 }}
+                        </div>
+                        <div class="col-xs-2">
+                            <input class="form-control" ng-model="scores[year][component.title]" type="text"/>
+                        </div>
+                        <div class="col-xs-2">
+                            <select class="custom-select form-control"
+                                ng-model="gradeFunctions[year][component.title]"
+                                ng-model-options="{ getterSetter: true }"
+                                ng-options="grade for grade in grades">
+                            </select>
+                        </div>
                     </div>
-                    <div class="col-xs-3" style="text-align: center">
-                        <label for="">{{ component.credits }}</label>
-                    </div>
-                    <div class="col-xs-3" style="text-align: center">
-                        <label for="">{{ getCreditsForModule(year, component) }}</label>
-                    </div>
-                    <div class="col-xs-1">
-                        <input class="form-control" ng-model="scores[year][component.title]" type="text"/>
-                    </div>
-                    <div class="col-xs-1">
-                        <select class="custom-select"
-                            ng-model="gradeFunctions[year][component.title]"
-                            ng-model-options="{ getterSetter: true }"
-                            ng-options="grade for grade in grades">
-                        </select>
-                    </div>
-                </div>
-            </li>
-        </ul>
+                </li>
+            </ul>
+        </div>
     </div>
     <div ng-show="!profileSet">
         <h1>Welcome!</h1>
