@@ -46,45 +46,92 @@
     <script>
         var app = angular.module('markCalculator', []);
         app.controller('calcCtrl', function ($scope) {
+            $scope.courses = {MEng: 1, BEng: 2};
+            $scope.unsetOptions = {DefaultAvg: 1, DefaultZero: 2, DefaultFixed: 3};
+
             $scope.profileSet = true;
 
             $scope.course = null;
             $scope.name = null;
             $scope.year = 1;
+            $scope.colouring = true;
+            $scope.unsetOption = $scope.unsetOptions.DefaultAvg;
+            $scope.defaultFixed = 0;
 
-            $scope.courses = {MEng: 1, BEng: 2};
-
-            $scope.courseString = function(course) {
+            console.log($scope.unsetOptions);
+            $scope.courseString = function (course) {
                 if (course == $scope.courses.MEng) return "MEng";
                 if (course == $scope.courses.BEng) return "BEng";
             };
 
-            $scope.getMarkForModule = function(year, module) {
-                return Math.max(Math.min($scope.scores[year][module], 100), 0) || 0;
+            $scope.getYears = function() {
+                if ($scope.course === $scope.courses.MEng) return [1,2,3,4];
+                if ($scope.course === $scope.courses.BEng) return [1,2,3];
+                return [1];
             };
 
-            $scope.getGradeForModule = function(year, module) {
+            $scope.getOverallGrade = function() {
+                return $scope.convertMarkToGrade($scope.getOverallMark());
+            };
+
+            $scope.getOverallMark = function() {
+                return 100 * $scope.getOverallCredits() / $scope.getOverallTotalCredits() || 0;
+            };
+
+            $scope.getOverallCredits = function() {
+                return $scope.getYears().map(function(y) {
+                    return $scope.getCreditsForYear(y);
+                }).reduce(function(a, v) { return a + v; });
+            };
+
+            $scope.getOverallTotalCredits = function() {
+                return $scope.getYears().map(function(y) {
+                    return $scope.getTotalCreditsForYear(y);
+                }).reduce(function(a, v) { return a + v; });
+            };
+
+            $scope.getMarkForModule = function (year, module) {
+                var number = Math.max(Math.min($scope.scores[year][module], 100), 0);
+
+                if (isNaN(number)) {
+                    switch ($scope.unsetOption) {
+                        case $scope.unsetOptions.DefaultAvg:
+                            return 0;
+                        case $scope.unsetOptions.DefaultFixed:
+                            return parseInt($scope.defaultFixed);
+                        case $scope.unsetOptions.DefaultZero:
+                            return 0;
+                    }
+                    $scope.unsetOptions = {DefaultAvg: 1, DefaultZero: 2, DefaultFixed: 3};
+                }
+                return number || 0;
+            };
+
+            $scope.getGradeForModule = function (year, module) {
+                console.log($scope.getMarkForModule(year, module));
                 return $scope.convertMarkToGrade($scope.getMarkForModule(year, module));
             };
 
-            $scope.convertGradeToMark = function(grade) {
+            $scope.convertGradeToMark = function (grade) {
                 return 90 - ($scope.grades.indexOf(grade) * 10);
             };
 
-            $scope.convertMarkToGrade = function(mark) {
+            $scope.convertMarkToGrade = function (mark) {
                 var grades = $scope.grades.slice();
                 while (mark < 90 && grades.length > 1) {
                     grades.shift();
                     mark += 10;
                 }
-                return grades.shift();
+                var grade = grades.shift();
+                console.log("converted " + mark + " to " + grade);
+                return grade;
             };
 
-            $scope.getCreditsForModule = function(year, component) {
+            $scope.getCreditsForModule = function (year, component) {
                 return $scope.getMarkForModule(year, component.title) / 100 * component.credits;
             };
 
-            $scope.getCreditsForYear = function(year) {
+            $scope.getCreditsForYear = function (year) {
                 var sum = 0;
                 for (var componentKey in $scope.courseWeightings[year]) {
                     sum += $scope.getCreditsForModule(year, $scope.courseWeightings[year][componentKey]);
@@ -92,32 +139,48 @@
                 return sum;
             };
 
-            $scope.getTotalCreditsForYear = function(year) {
+            $scope.getTotalCreditsForYear = function (year) {
                 return $scope.courseWeightings[year]
-                        .filter(function(m) { return !m.excludeTotal; })
-                        .map(function(m) { return m.credits; })
-                        .reduce(function(a, v) { return a + v }, 0);
+                        .filter(function (m) {
+                            return !m.excludeTotal;
+                        }).map(function (m) {
+                            return m.credits;
+                        }).reduce(function (a, v) {
+                            return a + v
+                        }, 0);
             };
 
-            $scope.getMarkForYear = function(year) {
-                return 100 * $scope.getCreditsForYear(year) / $scope.getTotalCreditsForYear(year);
+            $scope.getMarkForYear = function (year) {
+                return 100 * $scope.getCreditsForYear(year) / $scope.getTotalCreditsForYear(year) || 0;
             };
 
-            $scope.getGradeForYear = function(year) {
+            $scope.getGradeForYear = function (year) {
                 return $scope.convertMarkToGrade($scope.getMarkForYear(year));
             };
 
+            $scope.getListClass = function(grade) {
+                if ($scope.colouring) return $scope.gradeListClasses[grade];
+                return 'list-group-item-default';
+            };
+
+            $scope.getTagClass = function(grade) {
+                if ($scope.colouring) return $scope.gradeTagClasses[grade];
+                return 'tag-default';
+            };
+
             $scope.scores = {1: {}, 2: {}, 3: {}, 4: {}};
-
-            $scope.grades = ['A*', 'A+', 'A', 'B', 'C', 'D', 'F'];
-            $scope.gradeListClasses = {'A*': 'list-group-item-success', 'A+': 'list-group-item-success',
-                A: 'list-group-item-success', B: 'list-group-item-warning', C: 'list-group-item-warning',
-                D: 'list-group-item-info', F: 'list-group-item-danger'};
-            $scope.gradeTagClasses = {'A*': 'list-group-item-success', 'A+': 'list-group-item-success',
-                A: 'list-group-item-success', B: 'list-group-item-warning', C: 'list-group-item-warning',
-                D: 'list-group-item-info', F: 'tag-danger'};
             $scope.gradeFunctions = {};
-
+            $scope.grades = ['A*', 'A+', 'A', 'B', 'C', 'D', 'F'];
+            $scope.gradeListClasses = {
+                'A*': 'list-group-item-success', 'A+': 'list-group-item-success',
+                A: 'list-group-item-success', B: 'list-group-item-warning', C: 'list-group-item-warning',
+                D: 'list-group-item-info', F: 'list-group-item-danger'
+            };
+            $scope.gradeTagClasses = {
+                'A*': 'list-group-item-success', 'A+': 'list-group-item-success',
+                A: 'list-group-item-success', B: 'list-group-item-warning', C: 'list-group-item-warning',
+                D: 'list-group-item-info', F: 'tag-danger'
+            };
             $scope.courseWeightings = {
                 1: [
                     {title: 'Hardware Exam', credits: 65},
@@ -153,9 +216,8 @@
                     {title: 'Software Algorithms Exam', credits: 130},
                     {title: 'Operating Systems Exam', credits: 130},
                     {title: 'Networks Exam', credits: 130},
-                    {title: 'Architecture Exam', credits: 130},
-                    {title: 'Computational Techniques', credits: 130},
-                    {title: 'Intro to AI', credits: 130, excludeTotal: true},
+                    {title: 'Choice (AI/Arch/CompTechniques) Exam', credits: 130},
+                    {title: 'Choice (AI/Arch/CompTechniques) Exam', credits: 130},
 
                     {title: 'Linkload', credits: 11.3},
                     {title: 'Enigma', credits: 33.7},
@@ -172,11 +234,14 @@
 
                     {title: 'Webapps', credits: 150}
                 ],
-                3: []
+                3: [],
+                4: []
             };
 
-            $scope.createGradeFunction = function(year, module) {
-                return function(grade) {
+            $scope.createGradeFunction = function (year, module) {
+                return function (grade) {
+                    console.log(grade);
+                    console.log($scope.getGradeForModule(year, module.title));
                     if (grade === undefined) return $scope.getGradeForModule(year, module.title);
                     $scope.scores[year][module.title] = $scope.convertGradeToMark(grade);
                     return grade;
@@ -185,7 +250,7 @@
 
             for (var year in $scope.courseWeightings) {
                 $scope.gradeFunctions[year] = {};
-                $scope.courseWeightings[year].forEach(function(module) {
+                $scope.courseWeightings[year].forEach(function (module) {
                     $scope.gradeFunctions[year][module.title] = $scope.createGradeFunction(year, module)
                 });
             }
@@ -238,19 +303,79 @@
     <br/>
     <br/>
     <div ng-show="profileSet">
-        <div class="card card-block">
-            <h4 class="card-title">Overall Summary</h4>
+        <div class="row">
+            <div class="col-sm-5">
+                <div class="card" style="height: 350px">
+                    <div class="card-block">
+                        <h4 class="card-title">Degree Summary</h4>
+                        <p class="lead">
+                            Overall Grade: {{ getOverallCredits() | number:0 }} / {{ getOverallTotalCredits() }}
+                            <span class="tag" ng-class="getTagClass(getOverallGrade())">
+                                {{ getOverallGrade() }}&nbsp;&nbsp;&nbsp;{{ getOverallMark() | number:1 }}%
+                            </span>
+                        </p>
+                    </div>
+                    <div class="list-group-flush">
+                        <li class="list-group-item" ng-class="getListClass(getGradeForYear(year))"
+                            ng-repeat="year in getYears()">
+                            Year {{year}} -  {{ getCreditsForYear(year) | number:0 }} / {{ getTotalCreditsForYear(year) }}
+                            <span class="tag" ng-class="getTagClass(getGradeForYear(year))">
+                            {{ getGradeForYear(year) }}&nbsp;&nbsp;&nbsp;{{ getMarkForYear(year) | number:1 }}%
+                            </span>
+                        </li>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-7">
+                <div class="card card-block" style="height: 350px">
+                    <h4 class="card-title">Settings</h4>
+                    <fieldset class="form-group row">
+                        <legend class="col-form-legend col-sm-4">For unset marks:</legend>
+                        <div class="col-sm-8">
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input class="form-check-input" type="radio" ng-model="unsetOption" ng-value="unsetOptions.DefaultAvg">
+                                    Default to your current average (extrapolating)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input class="form-check-input" type="radio" ng-model="unsetOption" ng-value="unsetOptions.DefaultZero">
+                                    Default to zero
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input class="form-check-input" type="radio" ng-model="unsetOption" ng-value="unsetOptions.DefaultFixed">
+                                    Default to a fixed value: <input class="form-control form-control-sm" ng-model="defaultFixed" min="0" max="100" type="number"/>
+                                </label>
+                            </div>
+                        </div>
+                    </fieldset>
+                    <div class="form-group row">
+                        <label class="col-sm-4">Show colours:</label>
+                        <div class="col-sm-8">
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input class="form-check-input" ng-model="colouring" type="checkbox">
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="card">
             <div class="card-block">
                 <h4 class="card-title">Year {{year}} Summary</h4>
-                Credits: {{ getCreditsForYear(year) }} / {{ getTotalCreditsForYear(year) }}
-                <span class="tag" ng-class="gradeTagClasses[getGradeForYear(year)]">
+                Credits: {{ getCreditsForYear(year) | number:0 }} / {{ getTotalCreditsForYear(year) }}
+                <span class="tag" ng-class="getTagClass(getOverallGrade())">
                     {{ getGradeForYear(year) }}&nbsp;&nbsp;&nbsp;{{ getMarkForYear(year) | number:1 }}%
                 </span>
             </div>
             <ul class="list-group list-group-flush">
-                <li class="list-group-item" ng-class="gradeListClasses[gradeFunctions[year][component.title]()]" ng-repeat="component in courseWeightings[year]">
+                <li class="list-group-item" ng-class="getListClass(gradeFunctions[year][component.title]())"
+                    ng-repeat="component in courseWeightings[year]">
                     <div class="row">
                         <div class="col-xs-4 text-only-ul-block">
                             {{ component.title }}
@@ -262,13 +387,13 @@
                             {{ getCreditsForModule(year, component) | number:1 }}
                         </div>
                         <div class="col-xs-2">
-                            <input class="form-control" ng-model="scores[year][component.title]" type="text"/>
+                            <input class="form-control" ng-model="scores[year][component.title]" min="0" max="100" type="number"/>
                         </div>
                         <div class="col-xs-2">
                             <select class="custom-select form-control"
-                                ng-model="gradeFunctions[year][component.title]"
-                                ng-model-options="{ getterSetter: true }"
-                                ng-options="grade for grade in grades">
+                                    ng-model="gradeFunctions[year][component.title]"
+                                    ng-model-options="{ getterSetter: true }"
+                                    ng-options="grade for grade in grades">
                             </select>
                         </div>
                     </div>
