@@ -11,6 +11,8 @@
 
     <link href="main.css" rel="stylesheet"/>
 
+    <title>IC DoC Mark Calculator</title>
+
     <script>
         var app = angular.module('markCalculator', []);
         app.controller('calcCtrl', function ($scope) {
@@ -381,7 +383,7 @@
     <div ng-show="profileSet">
         <div class="row">
             <div class="col-sm-5">
-                <div class="card" style="height: 350px">
+                <div class="card">
                     <div class="card-block">
                         <h4 class="card-title">Degree Summary</h4>
                         <p class="lead">
@@ -403,7 +405,7 @@
                 </div>
             </div>
             <div class="col-sm-7">
-                <div class="card card-block" style="height: 350px">
+                <div class="card card-block">
                     <h4 class="card-title">Settings</h4>
                     <fieldset class="form-group row">
                         <legend class="col-form-legend col-sm-4">For unset marks:</legend>
@@ -455,11 +457,30 @@
                     {{ getGradeForYear(year) }}&nbsp;&nbsp;&nbsp;{{ getMarkForYear(year) | number:1 }}%
                 </span>
             </div>
-            <ul class="list-group list-group-flush">
+            <ul class="list-group list-group-flush" style="overflow: scroll; min-width: 500px">
+                <li class="list-group-item">
+                    <div class="row">
+                        <div class="col-xs-3">
+                            Title
+                        </div>
+                        <div class="col-xs-2" style="text-align: center">
+                            Credits
+                        </div>
+                        <div class="col-xs-2" style="text-align: center">
+                            Obtained
+                        </div>
+                        <div class="col-xs-3">
+                            Mark (%)
+                        </div>
+                        <div class="col-xs-2">
+                            Grade
+                        </div>
+                    </div>
+                </li>
                 <li class="list-group-item" ng-class="getListClass(gradeFunctions[year][component.title]())"
                     ng-repeat="component in courseWeightings[year]">
                     <div class="row">
-                        <div class="col-xs-4 text-only-ul-block">
+                        <div class="col-xs-3 text-only-ul-block">
                             <button class="btn btn-sm btn-danger" ng-click="dropModule(year, component)"
                                     ng-if="component.droppable">X</button> {{ component.title }}
                         </div>
@@ -469,7 +490,7 @@
                         <div class="col-xs-2 text-only-ul-block" style="text-align: center">
                             {{ getCreditsForModule(year, component) | number:1 }}
                         </div>
-                        <div class="col-xs-2">
+                        <div class="col-xs-3">
                             <input class="form-control" ng-model="scores[year][component.title]" min="0" max="100" type="number"/>
                         </div>
                         <div class="col-xs-2">
@@ -505,7 +526,7 @@
             Get started below! Your data is stored locally, and not uploaded to, or processed by, any server.
         </p>
         <div class="form-group row">
-            <label for="name-input" class="col-xs-2 col-form-label">Your Name</label>
+            <label for="name-input" class="col-xs-2 col-form-label">Name</label>
             <div class="col-xs-10">
                 <input class="form-control" type="text" placeholder="Name" ng-model="name" id="name-input">
             </div>
