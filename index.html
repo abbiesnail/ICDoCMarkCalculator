@@ -9,43 +9,12 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.5/css/bootstrap.min.css"
           integrity="sha384-AysaV+vQoT3kOAXZkl02PThvDr8HYKPZhNT5h/CXfBThSRXQ6jW5DO2ekP5ViFdi" crossorigin="anonymous">
 
-    <style>
-        html {
-            position: relative;
-            min-height: 100%;
-        }
-
-        body {
-            margin-bottom: 60px;
-        }
-
-        .footer {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 60px;
-            line-height: 60px; /* Vertically center the text there */
-            background-color: #f5f5f5;
-        }
-
-        body > .container {
-            padding: 60px 15px 0;
-        }
-
-        .footer > .container {
-            padding-right: 15px;
-            padding-left: 15px;
-        }
-
-        /* Hacky - LMK if you're reading this and manage to find a better way :) */
-        .text-only-ul-block {
-            margin-top: 6px;
-        }
-    </style>
+    <link href="main.css" rel="stylesheet"/>
 
     <script>
         var app = angular.module('markCalculator', []);
         app.controller('calcCtrl', function ($scope) {
+            // Excuse the abuse of Angular - pretty much exclusively used it for 2-way binding
             $scope.courses = {MEng: 1, BEng: 2};
             $scope.unsetOptions = {DefaultAvg: 1, DefaultZero: 2, DefaultFixed: 3};
 
@@ -58,7 +27,6 @@
             $scope.unsetOption = $scope.unsetOptions.DefaultAvg;
             $scope.defaultFixed = 0;
 
-            console.log($scope.unsetOptions);
             $scope.courseString = function (course) {
                 if (course == $scope.courses.MEng) return "MEng";
                 if (course == $scope.courses.BEng) return "BEng";
@@ -108,7 +76,6 @@
             };
 
             $scope.getGradeForModule = function (year, module) {
-                console.log($scope.getMarkForModule(year, module));
                 return $scope.convertMarkToGrade($scope.getMarkForModule(year, module));
             };
 
@@ -123,7 +90,6 @@
                     mark += 10;
                 }
                 var grade = grades.shift();
-                console.log("converted " + mark + " to " + grade);
                 return grade;
             };
 
@@ -208,16 +174,30 @@
                     {title: 'Topics', credits: 55}
                 ],
                 2: [
-                    {title: 'Software Design Exam', credits: 130},
-                    {title: 'Statistics Exam', credits: 130},
-                    {title: 'Compilers Exam', credits: 130},
-                    {title: 'Models of Computation Exam', credits: 130},
-                    {title: 'Concurrency Exam', credits: 130},
-                    {title: 'Software Algorithms Exam', credits: 130},
-                    {title: 'Operating Systems Exam', credits: 130},
-                    {title: 'Networks Exam', credits: 130},
-                    {title: 'Choice (AI/Arch/CompTechniques) Exam', credits: 130},
-                    {title: 'Choice (AI/Arch/CompTechniques) Exam', credits: 130},
+                    {title: 'Software Eng Design Exam', credits: 130 * 0.85},
+                    {title: 'Statistics Exam', credits: 130 * 0.85},
+                    {title: 'Compilers Exam', credits: 130 * 0.85},
+                    {title: 'Models Exam', credits: 130 * 0.85},
+                    {title: 'Concurrency Exam', credits: 130 * 0.85},
+                    {title: 'Software Eng Algorithms Exam', credits: 130 * 0.85},
+                    {title: 'Operating Systems Exam', credits: 130 * 0.85},
+                    {title: 'Networks Exam', credits: 130 * 0.85},
+                    {title: 'Intro to AI Exam', credits: 130 * 0.85, droppable: true},
+                    {title: 'Architecture Exam', credits: 130 * 0.85, droppable: true},
+                    {title: 'Computational Techniques Exam', credits: 130 * 0.85, droppable: true},
+
+                    {title: 'Software Eng Design CW', credits: 130 * 0.15},
+                    {title: 'Statistics CW', credits: 130 * 0.15},
+                    {title: 'Compilers CW', credits: 130 * 0.15},
+                    {title: 'Models CW', credits: 130 * 0.15},
+                    {title: 'Concurrency CW', credits: 130 * 0.15},
+                    {title: 'Software Eng Algorithms CW', credits: 130 * 0.15},
+                    {title: 'Operating CW', credits: 130 * 0.15},
+                    {title: 'Networks CW', credits: 130 * 0.15},
+                    {title: 'Intro to AI CW', credits: 130 * 0.15, droppable: true},
+                    {title: 'Architecture CW', credits: 130 * 0.15, droppable: true},
+                    {title: 'Computational Techniques CW', credits: 130 * 0.15, droppable: true},
+
 
                     {title: 'Linkload', credits: 11.3},
                     {title: 'Enigma', credits: 33.7},
@@ -237,11 +217,26 @@
                 3: [],
                 4: []
             };
+            $scope.droppedCourseWeightings = {
+                1: [], 2: [], 3: [], 4: []
+            };
+
+            $scope.dropModule = function(year, component) {
+                $scope.courseWeightings[year].splice($scope.courseWeightings[year].indexOf(component), 1);
+                $scope.droppedCourseWeightings[year].push(component);
+            };
+
+            $scope.unDropModule = function(year, component) {
+                $scope.droppedCourseWeightings[year].splice($scope.droppedCourseWeightings[year].indexOf(component), 1);
+                $scope.courseWeightings[year].push(component);
+            };
+
+            $scope.droppedModuleCount = function(year) {
+                return $scope.droppedCourseWeightings[year].length;
+            };
 
             $scope.createGradeFunction = function (year, module) {
                 return function (grade) {
-                    console.log(grade);
-                    console.log($scope.getGradeForModule(year, module.title));
                     if (grade === undefined) return $scope.getGradeForModule(year, module.title);
                     $scope.scores[year][module.title] = $scope.convertGradeToMark(grade);
                     return grade;
@@ -378,7 +373,8 @@
                     ng-repeat="component in courseWeightings[year]">
                     <div class="row">
                         <div class="col-xs-4 text-only-ul-block">
-                            {{ component.title }}
+                            <button class="btn btn-sm btn-danger" ng-click="dropModule(year, component)"
+                                    ng-if="component.droppable">X</button> {{ component.title }}
                         </div>
                         <div class="col-xs-2 text-only-ul-block" style="text-align: center">
                             {{ component.credits }}
@@ -395,6 +391,21 @@
                                     ng-model-options="{ getterSetter: true }"
                                     ng-options="grade for grade in grades">
                             </select>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="card" ng-if="droppedModuleCount(year) > 0">
+            <div class="card-block">
+                <h4 class="card-title">Modules not taken for Year {{year}}</h4>
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item" ng-class="getListClass(gradeFunctions[year][component.title]())"
+                    ng-repeat="component in droppedCourseWeightings[year]">
+                    <div class="row">
+                        <div class="col-xs-12 text-only-ul-block">
+                            <button class="btn btn-sm btn-success" ng-click="unDropModule(year, component)">Add back</button> {{ component.title }}
                         </div>
                     </div>
                 </li>
@@ -444,7 +455,7 @@
 
 <footer class="footer">
     <div class="container">
-        <span class="text-muted">Ashley Davies 2016 | This page uses the "Sticky Footer" bootstrap template | I will never upload or save your data without explicitly informing you</span>
+        <span class="text-muted">Ashley Davies 2016 | This page uses the "Sticky Footer" bootstrap template | This does not upload your data</span>
     </div>
 </footer>
 
