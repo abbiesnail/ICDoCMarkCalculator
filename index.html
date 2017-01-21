@@ -27,7 +27,7 @@
             $scope.unsetOption = $scope.unsetOptions.DefaultAvg;
             $scope.defaultFixed = 0;
 
-            if (!localStorage.getItem('profiles')) { localStorage.setItem('profiles', JSON.stringify('')); }
+            if (!localStorage.getItem('profiles')) { localStorage.setItem('profiles', JSON.stringify([])); }
 
             $scope.existingProfiles = JSON.parse(localStorage.getItem('profiles'));
 
