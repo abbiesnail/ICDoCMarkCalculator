@@ -27,7 +27,44 @@
             $scope.unsetOption = $scope.unsetOptions.DefaultAvg;
             $scope.defaultFixed = 0;
 
-            $scope.courseString = function (course) {
+            if (!localStorage.getItem('profiles')) { localStorage.setItem('profiles', JSON.stringify('')); }
+
+            $scope.existingProfiles = JSON.parse(localStorage.getItem('profiles'));
+
+            $scope.save = function() {
+                localStorage.setItem('profiles',
+                    JSON.stringify(
+                        (localStorage.getItem('profiles') ? JSON.parse(localStorage.getItem('profiles')) : []).filter(function(profile) {
+                            return $scope.name != profile.name;
+                        }).concat([{
+                            course: $scope.course,
+                            name: $scope.name,
+                            year: $scope.year,
+                            colouring: $scope.colouring,
+                            unsetOption: $scope.unsetOption,
+                            defaultFixed: $scope.defaultFixed,
+                            scores: $scope.scores
+                        }])
+                    )
+                );
+            };
+
+            $scope.load = function(name) {
+                var loaded = JSON.parse(localStorage.getItem('profiles')).filter(function(profile) {
+                    return name == profile.name;
+                })[0];
+
+                $scope.profileSet = true;
+                $scope.course = loaded.course;
+                $scope.name = loaded.name;
+                $scope.year = loaded.year;
+                $scope.colouring = loaded.colouring;
+                $scope.unsetOption = loaded.unsetOption;
+                $scope.defaultFixed = loaded.defaultFixed;
+                $scope.scores = loaded.scores;
+            };
+
+            $scope.courseString = function(course) {
                 if (course == $scope.courses.MEng) return "MEng";
                 if (course == $scope.courses.BEng) return "BEng";
             };
@@ -401,6 +438,12 @@
                             </div>
                         </div>
                     </div>
+                    <div class="form-group row">
+                        <label class="col-sm-4">Save data:</label>
+                        <div class="col-sm-8">
+                            <button class="btn btn-success" ng-click="save()">Save</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -457,7 +500,7 @@
         </div>
     </div>
     <div ng-show="!profileSet">
-        <h1>Welcome!</h1>
+        <h1>Welcome</h1>
         <p class="lead">
             Get started below! Your data is stored locally, and not uploaded to, or processed by, any server.
         </p>
@@ -492,6 +535,18 @@
                 </button>
             </div>
         </div>
+        <br/>
+        <h2>
+            ... Or load a saved profile:
+            <div class="dropdown profile-dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="profileDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    Profile
+                </button>
+                <div class="dropdown-menu" aria-labelledby="profileDropdown">
+                    <a class="dropdown-item" ng-repeat="profile in existingProfiles" ng-click="load(profile.name)">{{profile.name}}</a>
+                </div>
+            </div>
+        </h2>
     </div>
     <br/>
     <br/>
