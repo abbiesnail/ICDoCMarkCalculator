@@ -18,7 +18,7 @@
             $scope.courses = {MEng: 1, BEng: 2};
             $scope.unsetOptions = {DefaultAvg: 1, DefaultZero: 2, DefaultFixed: 3};
 
-            $scope.profileSet = true;
+            $scope.profileSet = false;
 
             $scope.course = null;
             $scope.name = null;
@@ -61,18 +61,35 @@
             $scope.getMarkForModule = function (year, module) {
                 var number = Math.max(Math.min($scope.scores[year][module], 100), 0);
 
-                if (isNaN(number)) {
+                if (isNaN(number) || !(typeof($scope.scores[year][module]) === 'number')) {
                     switch ($scope.unsetOption) {
                         case $scope.unsetOptions.DefaultAvg:
-                            return 0;
+                            return $scope.getCurrentAverageMarkForAttemptedModules();
                         case $scope.unsetOptions.DefaultFixed:
                             return parseInt($scope.defaultFixed);
                         case $scope.unsetOptions.DefaultZero:
                             return 0;
                     }
-                    $scope.unsetOptions = {DefaultAvg: 1, DefaultZero: 2, DefaultFixed: 3};
                 }
+
                 return number || 0;
+            };
+
+            $scope.getCurrentAverageMarkForAttemptedModules = function() {
+                return 100
+                        *
+                        ($scope.getYears().map(function(y) {
+                            return $scope.getCreditsForYearSafe(y)
+                        }).reduce(function(a, v) { return a + v; }))
+                        /
+                        ($scope.getYears().map(function(y) {
+                            return $scope.getTotalCreditsForYearForFilledInModules(y)
+                        }).reduce(function(a, v) { return a + v; }));
+            };
+
+            $scope.getCurrentAverageMarkForAttemptedModulesInYear = function(year) {
+                return 100 * $scope.getCreditsForYearSafe(year)
+                        / $scope.getTotalCreditsForYearForFilledInModules(year) || 0;
             };
 
             $scope.getGradeForModule = function (year, module) {
@@ -105,10 +122,37 @@
                 return sum;
             };
 
+            // Safe i.e. doesn't use getMarkForModule, stopping infinite recursion when calculating marks that depend
+            //   on existing marks
+            $scope.getCreditsForYearSafe = function (year) {
+                var sum = 0;
+                for (var moduleTitle in $scope.scores[year]) {
+                    if (!typeof($scope.scores[year][moduleTitle]) === 'number') continue;
+
+                    $scope.courseWeightings[year].map(function(module) {
+                        if (module.title == moduleTitle) {
+                            sum += 0.01 * module.credits * Math.max(Math.min($scope.scores[year][moduleTitle], 100), 0);
+                        }
+                    });
+                }
+                return sum;
+            };
+
             $scope.getTotalCreditsForYear = function (year) {
                 return $scope.courseWeightings[year]
                         .filter(function (m) {
                             return !m.excludeTotal;
+                        }).map(function (m) {
+                            return m.credits;
+                        }).reduce(function (a, v) {
+                            return a + v
+                        }, 0);
+            };
+
+            $scope.getTotalCreditsForYearForFilledInModules = function (year) {
+                return $scope.courseWeightings[year]
+                        .filter(function (m) {
+                            return m.title in $scope.scores[year] && typeof($scope.scores[year][m.title]) === 'number';
                         }).map(function (m) {
                             return m.credits;
                         }).reduce(function (a, v) {
@@ -330,7 +374,7 @@
                             <div class="form-check">
                                 <label class="form-check-label">
                                     <input class="form-check-input" type="radio" ng-model="unsetOption" ng-value="unsetOptions.DefaultAvg">
-                                    Default to your current average (extrapolating)
+                                    Default to your current average
                                 </label>
                             </div>
                             <div class="form-check">
