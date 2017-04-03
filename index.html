@@ -34,21 +34,7 @@
             $scope.existingProfiles = JSON.parse(localStorage.getItem('profiles'));
 
             $scope.save = function() {
-                localStorage.setItem('profiles',
-                    JSON.stringify(
-                        (localStorage.getItem('profiles') ? JSON.parse(localStorage.getItem('profiles')) : []).filter(function(profile) {
-                            return $scope.name != profile.name;
-                        }).concat([{
-                            course: $scope.course,
-                            name: $scope.name,
-                            year: $scope.year,
-                            colouring: $scope.colouring,
-                            unsetOption: $scope.unsetOption,
-                            defaultFixed: $scope.defaultFixed,
-                            scores: $scope.scores
-                        }])
-                    )
-                );
+                $scope.saveProfile($scope);
             };
 
             $scope.load = function(name) {
@@ -56,6 +42,35 @@
                     return name == profile.name;
                 })[0];
 
+                $scope.activeLoad(loaded);
+            };
+
+            $scope.import = function() {
+                var loaded = JSON.parse(atob($scope.code));
+
+                $scope.saveProfile(loaded);
+                $scope.activeLoad(loaded);
+            }
+
+            $scope.saveProfile = function(loaded) {
+                localStorage.setItem('profiles',
+                    JSON.stringify(
+                        (localStorage.getItem('profiles') ? JSON.parse(localStorage.getItem('profiles')) : []).filter(function(profile) {
+                            return $scope.name != profile.name;
+                        }).concat([{
+                            course: loaded.course,
+                            name: loaded.name,
+                            year: loaded.year,
+                            colouring: loaded.colouring,
+                            unsetOption: loaded.unsetOption,
+                            defaultFixed: loaded.defaultFixed,
+                            scores: loaded.scores
+                        }])
+                    )
+                );
+            }
+
+            $scope.activeLoad = function(loaded) {
                 $scope.profileSet = true;
                 $scope.course = loaded.course;
                 $scope.name = loaded.name;
@@ -64,7 +79,19 @@
                 $scope.unsetOption = loaded.unsetOption;
                 $scope.defaultFixed = loaded.defaultFixed;
                 $scope.scores = loaded.scores;
-            };
+            }
+
+            $scope.exportcode = function() {
+                return btoa(JSON.stringify({
+                            course: $scope.course,
+                            name: $scope.name,
+                            year: $scope.year,
+                            colouring: $scope.colouring,
+                            unsetOption: $scope.unsetOption,
+                            defaultFixed: $scope.defaultFixed,
+                            scores: $scope.scores
+                }));
+            }
 
             $scope.courseString = function(course) {
                 if (course == $scope.courses.MEng) return "MEng";
@@ -381,6 +408,12 @@
     <br/>
     <br/>
     <div ng-show="profileSet">
+        <div class="form-group row">
+            <label for="name-input" class="col-xs-2 col-form-label">Export Code</label>
+            <div class="col-xs-10">
+                <input class="form-control" readonly type="text" ng-value="exportcode()" id="code-input">
+            </div>
+        </div>
         <div class="row">
             <div class="col-sm-5">
                 <div class="card">
@@ -568,6 +601,24 @@
                 </div>
             </div>
         </h2>
+        <br/>
+        <h2>
+            ... Or import a profile:
+        </h2>
+        <br/>
+        <div class="form-group row">
+            <label for="name-input" class="col-xs-2 col-form-label">Code</label>
+            <div class="col-xs-10">
+                <input class="form-control" type="text" placeholder="Code" ng-model="code" id="code-input">
+            </div>
+        </div>
+        <div class="form-group row">
+            <div class="offset-sm-2 col-sm-10">
+                <button type="submit" class="btn btn-success" ng-click="import()">
+                    Import
+                </button>
+            </div>
+        </div>
     </div>
     <br/>
     <br/>
